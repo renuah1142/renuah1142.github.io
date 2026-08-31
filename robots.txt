@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://renuah1142.github.io/sitemap.xml
