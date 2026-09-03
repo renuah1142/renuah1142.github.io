@@ -20,7 +20,7 @@ const projectData = {
   wan: {
     title: 'WAN Infrastructure & Network Security Lab',
     category: 'Networking / Cybersecurity',
-    objective: 'Designed and implemented a multi-router enterprise WAN environment integrating routing, VPN, network security controls, and centralized infrastructure services.',
+    objective: 'Designed and implemented a multi-router enterprise WAN environment in GNS3, integrating routing, VPN, network security controls, and centralized infrastructure services.',
     role: 'Project Lead & Network Engineer',
     tech: 'GNS3, Cisco IOS, Frame Relay, eBGP, GRE, NAT/PAT, ACL, DHCP, DNS, NTP',
     challenges: [
@@ -35,12 +35,12 @@ const projectData = {
       'Deployed DHCP, DNS, and NTP for centralized services.'
     ],
     security: 'Network segmentation, policy control, and secure service routing in a lab environment.',
-    results: 'Produced a functional WAN simulation with resilient connectivity, routing validation, and documented troubleshooting workflows.'
+    results: 'A functional WAN simulation with resilient connectivity, routing validation, and documented troubleshooting workflows.'
   },
   campus: {
     title: 'Hierarchical Campus LAN Infrastructure & Multi-Protocol Design',
     category: 'Networking',
-    objective: 'Designed and deployed a redundant, multi-tier campus LAN connecting six client buildings and a centralized data center to dual ISP edge routers.',
+    objective: 'Designed and deployed a redundant, multi-tier campus LAN in GNS3, connecting six client buildings and a centralized data center to dual ISP edge routers.',
     role: 'Project Lead & Network Engineer',
     tech: 'GNS3, Cisco IOS, EIGRP, OSPF, GLBP, VLSM, IPv4, DHCP, DNS, NTP, Tailscale',
     challenges: [
@@ -52,15 +52,15 @@ const projectData = {
       'Designed a hierarchical campus topology connecting six client buildings.',
       'Implemented EIGRP across access/distribution layers and OSPF across the core/WAN edge.',
       'Configured GLBP to support active/active gateway load balancing and failover.',
-      'Designed a VLSM scheme containing 39 subnets and configured DHCP, DNS, and NTP.'
+      'Designed a VLSM scheme with 39 subnets and configured DHCP, DNS, and NTP.'
     ],
     security: 'Layered network segmentation, controlled access paths, and resilient gateway design.',
-    results: 'Created a scalable campus design that demonstrated enterprise-level routing, failover, and documentation-driven project execution.'
+    results: 'A scalable GNS3 campus design demonstrating enterprise-style routing, failover, and documentation-driven project execution.'
   },
   bigbackcooks: {
     title: 'BigBackCooks — Kitchen Inventory & Recipe Platform',
     category: 'Development / DevOps',
-    objective: 'Designed and deployed a full-stack application with authentication, database, API, and CI/CD components.',
+    objective: 'Designed and deployed a full-stack application with authentication, a database, a REST API, and CI/CD.',
     role: 'Lead Developer & DevOps',
     tech: 'Python, Flask, PostgreSQL, JWT, REST APIs, GitHub Actions, CI/CD, Render',
     challenges: [
@@ -74,13 +74,13 @@ const projectData = {
       'Created a GitHub Actions pipeline for automated testing and deployment.',
       'Deployed the solution to Render for a production-like environment.'
     ],
-    security: 'Authentication, access control, API security, and deployment security considerations were built into the project approach.',
-    results: 'Delivered a functional application that combined user-facing features with secure backend patterns and deployment automation.'
+    security: 'Authentication, access control, API security, and deployment considerations were built into the project.',
+    results: 'A functional application combining user-facing features with secure backend patterns and deployment automation.'
   },
   houseglimpse: {
     title: 'HouseGlimpse — Real Estate Listing Platform',
     category: 'Development',
-    objective: 'Designed and deployed a full-stack real estate listing platform incorporating authentication, database integration, and production deployment.',
+    objective: 'Designed and deployed a full-stack real estate listing platform with authentication, database integration, and a production deployment.',
     role: 'Lead Developer & DevOps',
     tech: 'Full-Stack Application, Firebase, Authentication, Deployment, UI Design',
     challenges: [
@@ -94,8 +94,8 @@ const projectData = {
       'Handled deployment and ongoing maintenance duties.',
       'Maintained a production application with consistent availability.'
     ],
-    security: 'Secure authentication and controlled access patterns were incorporated into the product workflow.',
-    results: 'Delivered a polished, deployable property platform with a stable production presence and confident application maintenance.'
+    security: 'Secure authentication and controlled access patterns were built into the workflow.',
+    results: 'A polished, deployable property platform with a stable production presence.'
   }
 };
 
@@ -112,18 +112,25 @@ if (navToggle && mainNav) {
 
 navLinks.forEach((link) => {
   link.addEventListener('click', () => {
-    if (mainNav) {
-      mainNav.classList.remove('open');
-    }
+    if (mainNav) mainNav.classList.remove('open');
+    if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+  });
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && mainNav && mainNav.classList.contains('open')) {
+    mainNav.classList.remove('open');
     if (navToggle) {
       navToggle.setAttribute('aria-expanded', 'false');
+      navToggle.focus();
     }
-  });
+  }
 });
 
 const highlightActiveNav = () => {
   const sections = [...document.querySelectorAll('main section[id]')];
   const navItems = [...document.querySelectorAll('.main-nav a[href^="#"]')];
+  if (!sections.length || !navItems.length) return;
 
   const observer = new IntersectionObserver(
     (entries) => {
@@ -146,9 +153,7 @@ highlightActiveNav();
 filterButtons.forEach((button) => {
   button.addEventListener('click', () => {
     const selectedFilter = button.dataset.filter;
-
     filterButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
-
     projectCards.forEach((card) => {
       const categories = card.dataset.category || '';
       const visible = selectedFilter === 'all' || categories.includes(selectedFilter);
@@ -157,9 +162,13 @@ filterButtons.forEach((button) => {
   });
 });
 
+let lastFocusedElement = null;
+
 const openModal = (projectKey) => {
   const project = projectData[projectKey];
   if (!project || !modal) return;
+
+  lastFocusedElement = document.activeElement;
 
   modalTitle.textContent = project.title;
   modalObjective.textContent = project.objective;
@@ -186,9 +195,7 @@ const openModal = (projectKey) => {
   modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
   const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-  if (focusable.length) {
-    focusable[0].focus();
-  }
+  if (focusable.length) focusable[0].focus();
 };
 
 const closeModal = () => {
@@ -196,6 +203,7 @@ const closeModal = () => {
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('modal-open');
+  if (lastFocusedElement) lastFocusedElement.focus();
 };
 
 document.querySelectorAll('.project-button').forEach((button) => {
@@ -208,16 +216,27 @@ if (modalClose) {
 
 if (modal) {
   modal.addEventListener('click', (event) => {
-    if (event.target && event.target.matches('[data-close="true"]')) {
-      closeModal();
-    }
+    if (event.target && event.target.matches('[data-close="true"]')) closeModal();
   });
 
   document.addEventListener('keydown', (event) => {
     if (!modal.classList.contains('open')) return;
+    if (event.key === 'Escape') closeModal();
 
-    if (event.key === 'Escape') {
-      closeModal();
+    if (event.key === 'Tab') {
+      const focusable = Array.from(
+        modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
   });
 }
