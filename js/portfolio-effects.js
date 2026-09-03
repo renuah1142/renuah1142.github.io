@@ -1,9 +1,25 @@
 (function(){
+  'use strict';
   const root=document.documentElement;
-  const mediaDark=matchMedia('(prefers-color-scheme: dark)');
-  root.dataset.theme=localStorage.getItem('theme')||(mediaDark.matches?'dark':'light');
-  const themeButtons=document.querySelectorAll('[data-theme-toggle],.theme-btn');
-  themeButtons.forEach(btn=>btn.addEventListener('click',()=>{const next=root.dataset.theme==='dark'?'light':'dark';root.dataset.theme=next;localStorage.setItem('theme',next)}));
+  const STORAGE_KEY='theme';
+  const getTheme=()=>localStorage.getItem(STORAGE_KEY)||'dark';
+  const applyTheme=(theme)=>{
+    const next=theme==='light'?'light':'dark';
+    root.dataset.theme=next;
+    document.querySelectorAll('[data-theme-toggle],.theme-btn').forEach(btn=>{
+      btn.setAttribute('aria-pressed',next==='light'?'true':'false');
+      btn.dataset.theme=next;
+      btn.innerHTML=next==='light'?'☀ Light':'☾ Dark';
+      btn.title=next==='light'?'Switch to dark mode':'Switch to light mode';
+    });
+  };
+  applyTheme(getTheme());
+  document.querySelectorAll('[data-theme-toggle],.theme-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    const next=root.dataset.theme==='dark'?'light':'dark';
+    localStorage.setItem(STORAGE_KEY,next);
+    applyTheme(next);
+  }));
+  addEventListener('storage',e=>{if(e.key===STORAGE_KEY)applyTheme(e.newValue||'dark')});
   const menu=document.querySelector('[data-menu]');
   const nav=document.querySelector('.nav-links');
   menu?.addEventListener('click',()=>nav?.classList.toggle('open'));
