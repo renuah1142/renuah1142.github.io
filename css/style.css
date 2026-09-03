@@ -7,16 +7,22 @@
    ========================================================================== */
 
 :root {
-  /* ---- color: 6 named values, one accent used sparingly ---- */
-  --ink-950: #0b0e12;        /* page background */
-  --ink-900: #10151b;        /* section-soft background */
-  --ink-800: #161d25;        /* raised panel background */
-  --line: #263140;           /* hairline borders / rules */
-  --paper: #e7ebef;          /* primary text */
-  --muted: #8b97a3;          /* secondary text */
-  --signal: #c9752f;         /* copper — the one accent: links, active state, focus */
-  --signal-dim: rgba(201, 117, 47, 0.14);
-  --ok: #5f9e82;             /* used only for "in progress / learning" status, muted green */
+  /* ---- color: warm signal + cool teal, on a deep blue-black field ---- */
+  --ink-950: #0a0d11;        /* page background */
+  --ink-900: #10151c;        /* section-soft background */
+  --ink-800: #171f29;        /* raised panel background */
+  --ink-700: #1e2733;        /* hover / active surface */
+  --line: #2a3542;           /* hairline borders / rules */
+  --paper: #eef1f4;          /* primary text */
+  --muted: #93a1ae;          /* secondary text */
+
+  --signal: #e08a45;         /* copper — primary accent: links, CTAs, active state */
+  --signal-bright: #f4ab6f;  /* hover / glow variant of the accent */
+  --signal-dim: rgba(224, 138, 69, 0.16);
+
+  --teal: #52b9a6;           /* secondary accent — status, "in progress", live indicators */
+  --teal-dim: rgba(82, 185, 166, 0.16);
+  --ok: var(--teal);
 
   --radius-sm: 3px;
   --radius-md: 6px;
@@ -28,8 +34,15 @@
   --max-width: 1180px;
 
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --t-fast: 140ms;
   --t-standard: 260ms;
+  --t-slow: 480ms;
+}
+
+.reduce-motion, .reduce-motion * {
+  animation: none !important;
+  transition: none !important;
 }
 
 * {
@@ -68,6 +81,18 @@ body::before {
     linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 64px 64px;
   opacity: 0.05;
+}
+
+/* ---- scroll progress indicator: a thin "signal trace" under the header --- */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--teal), var(--signal));
+  z-index: 200;
+  transition: width 80ms linear;
 }
 
 img { max-width: 100%; display: block; }
@@ -201,7 +226,26 @@ p, ul, ol { margin-top: 0; }
 .section { padding: 5.5rem 0; }
 .section-soft { background: var(--ink-900); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 
-.hero { padding-top: 4.5rem; }
+.hero { padding-top: 4.5rem; position: relative; overflow: hidden; }
+
+/* One deliberate moment of boldness: a slow-drifting signal/teal mesh,
+   contained to the hero only, nowhere else on the page. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(480px circle at 15% 20%, var(--signal-dim), transparent 60%),
+    radial-gradient(560px circle at 85% 75%, var(--teal-dim), transparent 60%);
+  animation: drift 22s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-2%, 3%, 0) scale(1.08); }
+}
 
 .hero-grid {
   display: grid;
@@ -301,7 +345,15 @@ p, ul, ol { margin-top: 0; }
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   box-shadow: none;
+  transition: border-color var(--t-standard) var(--ease), background var(--t-standard) var(--ease);
 }
+
+.skill-card:hover, .metric-card:hover, .principle-card:hover,
+.cloud-card:hover, .cert-card:hover, .lab-item:hover {
+  border-color: var(--signal);
+}
+.lab-item { transition: border-color var(--t-standard) var(--ease), transform var(--t-fast) var(--ease); }
+.lab-item:hover { transform: translateY(-2px); }
 
 .status-panel, .target-panel, .contact-card { padding: 1.25rem 1.3rem; }
 
@@ -327,6 +379,7 @@ p, ul, ol { margin-top: 0; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
   min-width: 78px;
   padding: 0.45rem 0.6rem;
   font-family: var(--font-mono);
@@ -335,24 +388,72 @@ p, ul, ol { margin-top: 0; }
   background: var(--ink-800);
   border: 1px solid var(--line);
   color: var(--paper);
+  transition: transform var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.network-graphic:hover .node { transform: translateY(-1px); }
+.node::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 0 0 var(--teal-dim);
+  animation: node-pulse 2.6s ease-in-out infinite;
 }
 .node-user { left: 10%; top: 70%; }
 .node-edge { left: 30%; top: 42%; }
 .node-fw { left: 47%; top: 18%; }
-.node-core { left: 60%; top: 48%; border-color: var(--signal); color: var(--signal); }
+.node-core {
+  left: 60%; top: 48%; border-color: var(--signal); color: var(--signal);
+}
+.node-core::before { background: var(--signal); animation-delay: 0.4s; }
 .node-soc { right: 15%; top: 18%; }
+.node-soc::before { animation-delay: 0.9s; }
 .node-cloud { right: 8%; top: 68%; }
+.node-cloud::before { animation-delay: 1.4s; }
 
+@keyframes node-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(82, 185, 166, 0.45); }
+  70%  { box-shadow: 0 0 0 6px rgba(82, 185, 166, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(82, 185, 166, 0); }
+}
+
+/* Connection lines carry a moving "packet" — a quiet signal-flow motif
+   rather than decoration for its own sake. */
 .line {
   position: absolute;
   height: 1px;
   background: var(--line);
+  overflow: visible;
+}
+.line::after {
+  content: "";
+  position: absolute;
+  top: -1.5px;
+  left: 0;
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--signal-bright), transparent);
+  animation: packet-flow 3.4s linear infinite;
+  opacity: 0.9;
 }
 .line-1 { left: 16%; top: 73%; width: 18%; }
 .line-2 { left: 36%; top: 48%; width: 18%; }
+.line-2::after { animation-delay: 0.6s; }
 .line-3 { left: 54%; top: 25%; width: 16%; }
+.line-3::after { animation-delay: 1.2s; }
 .line-4 { left: 61%; top: 52%; width: 14%; }
+.line-4::after { animation-delay: 1.8s; }
 .line-5 { left: 21%; top: 76%; width: 58%; transform: rotate(20deg); }
+.line-5::after { animation-delay: 2.3s; }
+
+@keyframes packet-flow {
+  0%   { left: -5%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
 
 .mini-dashboard { padding: 1rem 1.1rem; }
 .dashboard-title { font-family: var(--font-mono); color: var(--muted); font-size: 0.68rem; margin-bottom: 0.75rem; }
@@ -388,7 +489,7 @@ p, ul, ol { margin-top: 0; }
 .skills-grid, .projects-grid { display: grid; gap: 1px; }
 
 .snapshot-grid, .principles-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--line); border: 1px solid var(--line); }
-.metric-card, .principle-card { border-radius: 0; border: none; background: var(--ink-800); padding: 1.5rem; }
+.metric-card, .principle-card { border-radius: 0; border: 1px solid transparent; background: var(--ink-800); padding: 1.5rem; }
 
 .metric-value { font-family: var(--font-display); font-size: 1.35rem; color: var(--paper); margin-bottom: 0.6rem; }
 .metric-card p, .principle-card p, .skill-card li, .project-card p, .cloud-card p,
@@ -427,7 +528,7 @@ p, ul, ol { margin-top: 0; }
 /* ---- skills -------------------------------------------------------------- */
 
 .skills-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--line); border: 1px solid var(--line); }
-.skill-card { border-radius: 0; border: none; padding: 1.5rem; min-height: 100%; }
+.skill-card { border-radius: 0; border: 1px solid transparent; padding: 1.5rem; min-height: 100%; }
 .skill-card h3 { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 1.05rem; }
 
 .tag-learning {
@@ -477,7 +578,10 @@ p, ul, ol { margin-top: 0; }
 .project-button:hover, .project-button:focus-visible { border-color: var(--signal); }
 
 .lab-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--line); border: 1px solid var(--line); }
-.lab-item { background: var(--ink-800); border-radius: 0; padding: 1rem; color: var(--paper); font-size: 0.9rem; }
+.lab-item {
+  background: var(--ink-800); border: 1px solid transparent; border-radius: 0;
+  padding: 1rem; color: var(--paper); font-size: 0.9rem;
+}
 
 /* ---- experience timeline ---------------------------------------------------- */
 
@@ -495,7 +599,7 @@ p, ul, ol { margin-top: 0; }
 /* ---- cloud / certs ----------------------------------------------------------- */
 
 .cloud-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--line); border: 1px solid var(--line); }
-.cloud-card { border-radius: 0; border: none; padding: 1.6rem; }
+.cloud-card { border-radius: 0; border: 1px solid transparent; padding: 1.6rem; }
 .status-pill {
   display: inline-block; font-family: var(--font-mono); font-size: 0.68rem;
   padding: 0.3rem 0.6rem; border-radius: var(--radius-sm);
@@ -504,7 +608,7 @@ p, ul, ol { margin-top: 0; }
 .note { margin-top: 0.85rem; font-style: normal; color: var(--muted); font-size: 0.88rem; }
 
 .cert-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--line); border: 1px solid var(--line); }
-.cert-card { border-radius: 0; border: none; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.5rem; }
+.cert-card { border-radius: 0; border: 1px solid transparent; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.5rem; }
 .status { display: inline-block; font-family: var(--font-mono); font-size: 0.66rem; padding: 0.4rem 0.65rem; border-radius: var(--radius-sm); }
 .status-blue { border: 1px solid var(--ok); color: var(--ok); }
 
@@ -563,6 +667,90 @@ p, ul, ol { margin-top: 0; }
 
 body.modal-open { overflow: hidden; }
 
+/* ---- scroll reveal ---------------------------------------------------------
+   Headings get a signature "trace" wipe (used once, as the signature move).
+   Cards/rows get a quieter rise-and-fade, staggered by their position. ------- */
+
+.section-heading {
+  --reveal-delay: 0ms;
+}
+.section-heading h2 {
+  position: relative;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--t-slow) var(--ease);
+  transition-delay: var(--reveal-delay);
+}
+.section-heading.in-view h2 { clip-path: inset(0 0 0 0); }
+
+.section-heading .eyebrow {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity var(--t-standard) var(--ease), transform var(--t-standard) var(--ease);
+}
+.section-heading.in-view .eyebrow { opacity: 1; transform: translateX(0); }
+
+.reveal-row > * {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity var(--t-standard) var(--ease), transform var(--t-standard) var(--ease);
+}
+.reveal-row.in-view > * { opacity: 1; transform: translateY(0); }
+.reveal-row.in-view > *:nth-child(1) { transition-delay: 0ms; }
+.reveal-row.in-view > *:nth-child(2) { transition-delay: 60ms; }
+.reveal-row.in-view > *:nth-child(3) { transition-delay: 120ms; }
+.reveal-row.in-view > *:nth-child(4) { transition-delay: 180ms; }
+.reveal-row.in-view > *:nth-child(5) { transition-delay: 240ms; }
+.reveal-row.in-view > *:nth-child(6) { transition-delay: 300ms; }
+
+/* ---- interactive project-card tilt (driven by JS custom properties) ------- */
+
+.project-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform var(--t-fast) var(--ease), background var(--t-standard) var(--ease);
+  will-change: transform;
+}
+.project-card h3 {
+  transition: color var(--t-fast) var(--ease);
+}
+.project-card:hover h3 { color: var(--signal-bright); }
+
+/* ---- animated counters: stat numbers count up once in view ---------------- */
+
+.stat-card strong { font-variant-numeric: tabular-nums; }
+
+/* ---- button + tag micro-interactions --------------------------------------- */
+
+.button-primary {
+  position: relative;
+  overflow: hidden;
+}
+.button-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.35) 45%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform var(--t-slow) var(--ease);
+}
+.button-primary:hover::after { transform: translateX(120%); }
+
+.tech-tags span, .tags-inline span {
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.tech-tags span:hover, .tags-inline span:hover {
+  border-color: var(--signal);
+  color: var(--paper);
+  transform: translateY(-1px);
+}
+
+.roadmap-block { transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); }
+.roadmap-block:hover { border-color: var(--signal); transform: translateY(-1px); }
+
+.filter-btn { transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); }
+.filter-btn:hover { transform: translateY(-1px); }
+
 /* ---- one orchestrated entrance moment (not per-section fade-in spam) -------- */
 
 .hero-copy > * { opacity: 0; animation: rise var(--t-standard) var(--ease) forwards; }
@@ -579,6 +767,13 @@ body.modal-open { overflow: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-copy > * { animation: none; opacity: 1; transform: none; }
+  .hero::before { animation: none; }
+  .node::before { animation: none; box-shadow: none; }
+  .line::after { animation: none; opacity: 0; }
+  .section-heading h2 { clip-path: none; }
+  .section-heading .eyebrow,
+  .reveal-row > * { opacity: 1; transform: none; }
+  .project-card { transform: none; }
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 

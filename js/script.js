@@ -1,3 +1,9 @@
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// resume.html includes this same script but has no nav-toggle/modal/filter
+// markup — every block below already guards with `if (el)` / `?.`, so it's
+// safe to share one script file across both pages.
+
 const navToggle = document.querySelector('.nav-toggle');
 const mainNav = document.querySelector('.main-nav');
 const navLinks = document.querySelectorAll('.main-nav a');
@@ -252,3 +258,121 @@ window.addEventListener('scroll', () => {
 backToTop?.addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
+
+/* ---------------------------------------------------------------------------
+   Scroll progress trace — a thin line that fills as you move through the page
+--------------------------------------------------------------------------- */
+
+const scrollProgress = document.querySelector('.scroll-progress');
+
+const updateScrollProgress = () => {
+  if (!scrollProgress) return;
+  const doc = document.documentElement;
+  const scrollable = doc.scrollHeight - doc.clientHeight;
+  const pct = scrollable > 0 ? (doc.scrollTop / scrollable) * 100 : 0;
+  scrollProgress.style.width = `${pct}%`;
+};
+
+window.addEventListener('scroll', updateScrollProgress, { passive: true });
+updateScrollProgress();
+
+/* ---------------------------------------------------------------------------
+   Scroll reveal — headings get a one-time "trace" wipe, grids/rows get a
+   quiet staggered rise. Skipped entirely if the person prefers less motion.
+--------------------------------------------------------------------------- */
+
+const revealTargets = document.querySelectorAll('.section-heading, .reveal-row');
+
+if (prefersReducedMotion) {
+  revealTargets.forEach((el) => el.classList.add('in-view'));
+} else if ('IntersectionObserver' in window) {
+  const revealObserver = new IntersectionObserver(
+    (entries, obs) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          obs.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.2, rootMargin: '0px 0px -40px 0px' }
+  );
+  revealTargets.forEach((el) => revealObserver.observe(el));
+} else {
+  revealTargets.forEach((el) => el.classList.add('in-view'));
+}
+
+/* ---------------------------------------------------------------------------
+   Animated counters — stat numbers count up once, the moment they're seen
+--------------------------------------------------------------------------- */
+
+const counters = document.querySelectorAll('[data-count]');
+
+const animateCounter = (el) => {
+  const target = parseInt(el.dataset.count, 10) || 0;
+  if (prefersReducedMotion || target === 0) {
+    el.textContent = String(target);
+    return;
+  }
+  const duration = 900;
+  const start = performance.now();
+
+  const step = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = String(Math.round(eased * target));
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+};
+
+if (counters.length && 'IntersectionObserver' in window) {
+  const counterObserver = new IntersectionObserver(
+    (entries, obs) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          animateCounter(entry.target);
+          obs.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.6 }
+  );
+  counters.forEach((el) => counterObserver.observe(el));
+} else {
+  counters.forEach((el) => animateCounter(el));
+}
+
+/* ---------------------------------------------------------------------------
+   Project-card tilt — a light, physical response to the cursor.
+   Disabled on touch devices and when reduced motion is requested.
+--------------------------------------------------------------------------- */
+
+const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+if (!prefersReducedMotion && supportsHover) {
+  document.querySelectorAll('.project-card').forEach((card) => {
+    let frame = null;
+
+    const onMove = (event) => {
+      const rect = card.getBoundingClientRect();
+      const px = (event.clientX - rect.left) / rect.width - 0.5;
+      const py = (event.clientY - rect.top) / rect.height - 0.5;
+
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        card.style.setProperty('--ry', `${px * 6}deg`);
+        card.style.setProperty('--rx', `${py * -6}deg`);
+      });
+    };
+
+    const onLeave = () => {
+      if (frame) cancelAnimationFrame(frame);
+      card.style.setProperty('--rx', '0deg');
+      card.style.setProperty('--ry', '0deg');
+    };
+
+    card.addEventListener('pointermove', onMove);
+    card.addEventListener('pointerleave', onLeave);
+  });
+}
